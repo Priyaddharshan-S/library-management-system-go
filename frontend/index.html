@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Library Management System</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --border: #e2e4e9;
+    --text: #1f2430;
+    --text-muted: #6b7280;
+    --primary: #2f5d50;
+    --primary-hover: #24473d;
+    --danger: #b3413a;
+    --danger-bg: #fbeceb;
+    --success: #2a7a4f;
+    --warn: #b8860b;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  h1, h2, h3 { margin: 0 0 0.5rem 0; }
+  input, select, button {
+    font: inherit;
+    padding: 0.55rem 0.75rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button:hover { background: var(--primary-hover); }
+  button.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  button.secondary:hover { background: var(--bg); }
+  button.danger { background: var(--danger); }
+  button.danger:hover { background: #8f332d; }
+  button.small { padding: 0.35rem 0.6rem; font-size: 0.85rem; }
+
+  /* ---- Auth view ---- */
+  #authView {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .auth-card {
+    background: var(--surface);
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    width: 100%;
+    max-width: 360px;
+  }
+  .auth-card h1 { text-align: center; margin-bottom: 1.5rem; }
+  .auth-card input { width: 100%; margin-bottom: 0.75rem; }
+  .auth-card button { width: 100%; margin-top: 0.25rem; }
+  .auth-card p { text-align: center; font-size: 0.9rem; color: var(--text-muted); margin-top: 1rem; }
+  .auth-card a { color: var(--primary); cursor: pointer; }
+
+  /* ---- App shell ---- */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.9rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  header h1 { font-size: 1.2rem; }
+  #mainNav { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .nav-btn {
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 0.5rem 0.9rem;
+  }
+  .nav-btn:hover { background: var(--bg); color: var(--text); }
+  .nav-btn.active { background: var(--primary); color: white; }
+  .user-info { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; color: var(--text-muted); }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+
+  .view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .search-bar { display: flex; gap: 0.5rem; flex: 1; min-width: 260px; }
+  .search-bar input { flex: 1; }
+
+  /* ---- Cards / grid ---- */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+  .card h3 { font-size: 1rem; }
+  .card-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+  .muted { color: var(--text-muted); font-size: 0.9rem; margin: 0.15rem 0; }
+  .muted.small { font-size: 0.8rem; }
+  .empty { color: var(--text-muted); font-style: italic; }
+
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-width: 420px;
+  }
+
+  /* ---- Tables ---- */
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+  th, td { text-align: left; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+  th { background: var(--bg); color: var(--text-muted); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  tr.row-overdue td { background: var(--danger-bg); }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: var(--bg);
+    color: var(--text-muted);
+  }
+  .badge-waiting { background: #fff3cd; color: var(--warn); }
+  .badge-notified { background: #d3f0e0; color: var(--success); }
+  .badge-active { background: #e6f0ee; color: var(--primary); }
+  .badge-overdue { background: var(--danger-bg); color: var(--danger); }
+
+  /* ---- Reports ---- */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem;
+    text-align: center;
+  }
+  .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+  .stat-label { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem; }
+
+  /* ---- Toasts ---- */
+  #toastContainer {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 1000;
+  }
+  .toast {
+    background: var(--text);
+    color: white;
+    padding: 0.7rem 1rem;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    max-width: 300px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast-success { background: var(--success); }
+  .toast-error { background: var(--danger); }
+</style>
+</head>
+<body>
+
+<div id="toastContainer"></div>
+
+<!-- ==================== AUTH VIEW ==================== -->
+<div id="authView">
+  <div class="auth-card">
+    <h1>📚 Library System</h1>
+
+    <div id="loginForm">
+      <h2>Log In</h2>
+      <input id="loginEmail" type="email" placeholder="Email" autocomplete="username">
+      <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+      <button onclick="handleLogin()">Log In</button>
+      <p>No account? <a onclick="showRegister()">Register</a></p>
+    </div>
+
+    <div id="registerForm" style="display:none">
+      <h2>Register</h2>
+      <input id="registerName" placeholder="Full name">
+      <input id="registerEmail" type="email" placeholder="Email">
+      <input id="registerPassword" type="password" placeholder="Password (min 6 characters)">
+      <button onclick="handleRegister()">Create Account</button>
+      <p>Have an account? <a onclick="showLogin()">Log In</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== APP VIEW ==================== -->
+<div id="appView" style="display:none">
+  <header>
+    <h1>📚 Library System</h1>
+    <nav id="mainNav">
+      <button class="nav-btn" data-view="catalog" onclick="switchView('catalog')">Catalog</button>
+      <button class="nav-btn admin-only" data-view="circulation" onclick="switchView('circulation')">Circulation Desk</button>
+      <button class="nav-btn admin-only" data-view="patrons" onclick="switchView('patrons')">Patrons</button>
+      <button class="nav-btn admin-only" data-view="reports" onclick="switchView('reports')">Reports</button>
+    </nav>
+    <div class="user-info">
+      <span id="currentUserLabel"></span>
+      <button class="secondary" onclick="handleLogout()">Log Out</button>
+    </div>
+  </header>
+
+  <main id="content"></main>
+</div>
+
+<script>
+// ==================== CONFIG ====================
+// Change this if your API runs somewhere other than localhost:8080.
+const API_BASE = 'http://localhost:8080';
+
+// ==================== API HELPER ====================
+async function apiFetch(path, options = {}) {
+  const token = localStorage.getItem('ls_token');
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  let res;
+  try {
+    res = await fetch(API_BASE + path, Object.assign({}, options, { headers }));
+  } catch (networkErr) {
+    throw new Error('Could not reach the server. Is the API running on ' + API_BASE + '?');
+  }
+
+  if (res.status === 401) {
+    handleLogout();
+    throw new Error('Session expired. Please log in again.');
+  }
+
+  const text = await res.text();
+  let data = null;
+  if (text) {
+    try { data = JSON.parse(text); } catch (e) { /* not JSON, fine for 204s */ }
+  }
+
+  if (!res.ok) {
+    const message = (data && data.error) ? data.error : ('Request failed (' + res.status + ')');
+    throw new Error(message);
+  }
+
+  return data;
+}
+
+// ==================== TOASTS ====================
+function toast(message, type) {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? (' toast-' + type) : '');
+  el.textContent = message;
+  container.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+// ==================== AUTH ====================
+function showRegister() {
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'block';
+}
+function showLogin() {
+  document.getElementById('registerForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'block';
+}
+
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) { toast('Please enter your email and password', 'error'); return; }
+  try {
+    const data = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    localStorage.setItem('ls_token', data.token);
+    localStorage.setItem('ls_user', JSON.stringify(data.user));
+    toast('Welcome back, ' + data.user.name + '!', 'success');
+    showApp();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function handleRegister() {
+  const name = document.getElementById('registerName').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
+  const password = document.getElementById('registerPassword').value;
+  if (!name || !email || !password) { toast('Please fill in every field', 'error'); return; }
+  try {
+    await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password }) });
+    toast('Account created — please log in', 'success');
+    document.getElementById('loginEmail').value = email;
+    showLogin();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('ls_token');
+  localStorage.removeItem('ls_user');
+  document.getElementById('appView').style.display = 'none';
+  document.getElementById('authView').style.display = 'flex';
+}
+
+function getCurrentUser() {
+  const raw = localStorage.getItem('ls_user');
+  return raw ? JSON.parse(raw) : null;
+}
+
+function showApp() {
+  const user = getCurrentUser();
+  if (!user) { handleLogout(); return; }
+
+  document.getElementById('authView').style.display = 'none';
+  document.getElementById('appView').style.display = 'block';
+  document.getElementById('currentUserLabel').textContent = user.name + ' (' + user.role + ')';
+
+  const isAdmin = user.role === 'admin';
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = isAdmin ? 'inline-block' : 'none';
+  });
+
+  switchView('catalog');
+}
+
+// ==================== VIEW ROUTING ====================
+function switchView(view) {
+  const user = getCurrentUser();
+  const adminOnlyViews = ['circulation', 'patrons', 'reports'];
+  if (adminOnlyViews.includes(view) && (!user || user.role !== 'admin')) {
+    toast('That view is for admins only', 'error');
+    view = 'catalog';
+  }
+
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === view);
+  });
+
+  const renderers = { catalog: renderCatalog, circulation: renderCirculation, patrons: renderPatrons, reports: renderReports };
+  renderers[view]();
+}
+
+// ==================== CATALOG VIEW ====================
+async function renderCatalog() {
+  const user = getCurrentUser();
+  const isAdmin = user.role === 'admin';
+  const content = document.getElementById('content');
+
+  content.innerHTML = `
+    <div class="view-header">
+      <h2>Catalog</h2>
+      <div class="search-bar">
+        <input id="searchInput" placeholder="Search by title, author, or ISBN...">
+        <button class="secondary" onclick="doSearch()">Search</button>
+        <button class="secondary" onclick="clearSearch()">Clear</button>
+      </div>
+      ${isAdmin ? '<button onclick="showAddBookForm()">+ Add Book</button>' : ''}
+    </div>
+    <div id="addBookFormContainer"></div>
+    <div id="bookList" class="card-grid"><p class="empty">Loading books...</p></div>
+    ${!isAdmin ? '<h3 style="margin-top:2.5rem">My Reservations</h3><div id="myReservations"><p class="empty">Loading...</p></div>' : ''}
+  `;
+
+  document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+  await loadBooks();
+  if (!isAdmin) await loadMyReservations();
+}
+
+async function loadBooks(query) {
+  const listEl = document.getElementById('bookList');
+  try {
+    const path = query ? ('/books?q=' + encodeURIComponent(query)) : '/books';
+    const books = await apiFetch(path);
+    if (books.length === 0) { listEl.innerHTML = '<p class="empty">No books found.</p>'; return; }
+
+    const isAdmin = getCurrentUser().role === 'admin';
+    listEl.innerHTML = books.map(b => `
+      <div class="card">
+        <h3>${escapeHtml(b.title)}</h3>
+        <p class="muted">${escapeHtml(b.author)}</p>
+        <p class="muted small">ISBN: ${escapeHtml(b.isbn)}</p>
+        <p>${b.available_copies} / ${b.total_copies} available</p>
+        <div class="card-actions">
+          ${!isAdmin ? `<button class="small" onclick="reserveBook(${b.id})">Reserve</button>` : ''}
+          ${isAdmin ? `<button class="small secondary" onclick="editBook(${b.id})">Edit</button><button class="small danger" onclick="deleteBook(${b.id})">Delete</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    listEl.innerHTML = '<p class="empty">Failed to load books.</p>';
+    toast(err.message, 'error');
+  }
+}
+
+function doSearch() {
+  loadBooks(document.getElementById('searchInput').value.trim());
+}
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  loadBooks();
+}
+
+function showAddBookForm() {
+  document.getElementById('addBookFormContainer').innerHTML = `
+    <div class="form-card">
+      <h3>Add Book</h3>
+      <input id="newBookTitle" placeholder="Title">
+      <input id="newBookAuthor" placeholder="Author">
+      <input id="newBookIsbn" placeholder="ISBN">
+      <input id="newBookCopies" type="number" min="1" value="1" placeholder="Total copies">
+      <div class="card-actions">
+        <button onclick="submitAddBook()">Save</button>
+        <button class="secondary" onclick="document.getElementById('addBookFormContainer').innerHTML=''">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
+async function submitAddBook() {
+  const title = document.getElementById('newBookTitle').value.trim();
+  const author = document.getElementById('newBookAuthor').value.trim();
+  const isbn = document.getElementById('newBookIsbn').value.trim();
+  const totalCopies = parseInt(document.getElementById('newBookCopies').value, 10);
+  if (!title || !author || !isbn || !totalCopies) { toast('Please fill in every field', 'error'); return; }
+  try {
+    await apiFetch('/books', { method: 'POST', body: JSON.stringify({ title, author, isbn, total_copies: totalCopies }) });
+    toast('Book added', 'success');
+    document.getElementById('addBookFormContainer').innerHTML = '';
+    loadBooks();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function editBook(id) {
+  try {
+    const book = await apiFetch('/books/' + id);
+    document.getElementById('addBookFormContainer').innerHTML = `
+      <div class="form-card">
+        <h3>Edit Book</h3>
+        <input id="editBookTitle" value="${escapeHtml(book.title)}">
+        <input id="editBookAuthor" value="${escapeHtml(book.author)}">
+        <input id="editBookIsbn" value="${escapeHtml(book.isbn)}">
+        <input id="editBookCopies" type="number" min="1" value="${book.total_copies}">
+        <div class="card-actions">
+          <button onclick="submitEditBook(${id})">Save</button>
+          <button class="secondary" onclick="document.getElementById('addBookFormContainer').innerHTML=''">Cancel</button>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function submitEditBook(id) {
+  const title = document.getElementById('editBookTitle').value.trim();
+  const author = document.getElementById('editBookAuthor').value.trim();
+  const isbn = document.getElementById('editBookIsbn').value.trim();
+  const totalCopies = parseInt(document.getElementById('editBookCopies').value, 10);
+  try {
+    await apiFetch('/books/' + id, { method: 'PUT', body: JSON.stringify({ title, author, isbn, total_copies: totalCopies }) });
+    toast('Book updated', 'success');
+    document.getElementById('addBookFormContainer').innerHTML = '';
+    loadBooks();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function deleteBook(id) {
+  if (!confirm('Delete this book? This cannot be undone.')) return;
+  try {
+    await apiFetch('/books/' + id, { method: 'DELETE' });
+    toast('Book deleted', 'success');
+    loadBooks();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function reserveBook(bookId) {
+  try {
+    await apiFetch('/reservations', { method: 'POST', body: JSON.stringify({ book_id: bookId }) });
+    toast('Reserved — you\'ll be emailed when a copy is available', 'success');
+    loadMyReservations();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function loadMyReservations() {
+  const el = document.getElementById('myReservations');
+  if (!el) return;
+  try {
+    const reservations = await apiFetch('/reservations/mine');
+    if (reservations.length === 0) { el.innerHTML = '<p class="empty">You have no reservations.</p>'; return; }
+    el.innerHTML = '<table><thead><tr><th>Book ID</th><th>Status</th><th>Reserved</th><th></th></tr></thead><tbody>' +
+      reservations.map(r => `
+        <tr>
+          <td>${r.book_id}</td>
+          <td><span class="badge badge-${r.status}">${r.status}</span></td>
+          <td>${new Date(r.reserved_at).toLocaleDateString()}</td>
+          <td>${r.status === 'waiting' ? `<button class="small danger" onclick="cancelReservation(${r.id})">Cancel</button>` : ''}</td>
+        </tr>
+      `).join('') + '</tbody></table>';
+  } catch (err) {
+    el.innerHTML = '<p class="empty">Failed to load reservations.</p>';
+  }
+}
+
+async function cancelReservation(id) {
+  try {
+    await apiFetch('/reservations/' + id, { method: 'DELETE' });
+    toast('Reservation cancelled', 'success');
+    loadMyReservations();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+// ==================== CIRCULATION DESK VIEW ====================
+async function renderCirculation() {
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <h2>Circulation Desk</h2>
+    <div class="form-card">
+      <h3>Check Out a Book</h3>
+      <select id="borrowUserSelect"><option>Loading patrons...</option></select>
+      <select id="borrowBookSelect"><option>Loading books...</option></select>
+      <button onclick="submitBorrow()">Check Out</button>
+    </div>
+    <h3>Active Loans</h3>
+    <div id="activeLoans"><p class="empty">Loading...</p></div>
+  `;
+
+  await loadCirculationDropdowns();
+  await loadActiveLoans();
+}
+
+async function loadCirculationDropdowns() {
+  try {
+    const [users, books] = await Promise.all([apiFetch('/users'), apiFetch('/books')]);
+    document.getElementById('borrowUserSelect').innerHTML =
+      users.map(u => `<option value="${u.id}">${escapeHtml(u.name)} — ${escapeHtml(u.email)}</option>`).join('');
+    document.getElementById('borrowBookSelect').innerHTML =
+      books.map(b => `<option value="${b.id}">${escapeHtml(b.title)} (${b.available_copies} available)</option>`).join('');
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function submitBorrow() {
+  const userId = parseInt(document.getElementById('borrowUserSelect').value, 10);
+  const bookId = parseInt(document.getElementById('borrowBookSelect').value, 10);
+  if (!userId || !bookId) { toast('Choose a patron and a book', 'error'); return; }
+  try {
+    await apiFetch('/loans/borrow', { method: 'POST', body: JSON.stringify({ user_id: userId, book_id: bookId }) });
+    toast('Book checked out', 'success');
+    loadActiveLoans();
+    loadCirculationDropdowns();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function loadActiveLoans() {
+  const el = document.getElementById('activeLoans');
+  try {
+    const loans = await apiFetch('/loans/active');
+    if (loans.length === 0) { el.innerHTML = '<p class="empty">No active loans.</p>'; return; }
+    el.innerHTML = '<table><thead><tr><th>Loan ID</th><th>Book ID</th><th>Patron ID</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>' +
+      loans.map(l => {
+        const overdue = new Date(l.due_at) < new Date();
+        return `
+          <tr class="${overdue ? 'row-overdue' : ''}">
+            <td>${l.id}</td>
+            <td>${l.book_id}</td>
+            <td>${l.user_id}</td>
+            <td>${new Date(l.due_at).toLocaleDateString()}</td>
+            <td>${overdue ? '<span class="badge badge-overdue">Overdue</span>' : '<span class="badge badge-active">Active</span>'}</td>
+            <td><button class="small" onclick="returnLoan(${l.id})">Return</button></td>
+          </tr>`;
+      }).join('') + '</tbody></table>';
+  } catch (err) {
+    el.innerHTML = '<p class="empty">Failed to load loans.</p>';
+  }
+}
+
+async function returnLoan(id) {
+  try {
+    await apiFetch('/loans/' + id + '/return', { method: 'POST' });
+    toast('Book returned', 'success');
+    loadActiveLoans();
+    loadCirculationDropdowns();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+// ==================== PATRONS VIEW ====================
+async function renderPatrons() {
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <h2>Patrons</h2>
+    <div id="patronList"><p class="empty">Loading...</p></div>
+    <div id="patronDetail"></div>
+  `;
+  try {
+    const users = await apiFetch('/users');
+    document.getElementById('patronList').innerHTML =
+      '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>' +
+      users.map(u => `
+        <tr>
+          <td>${escapeHtml(u.name)}</td>
+          <td>${escapeHtml(u.email)}</td>
+          <td><span class="badge">${u.role}</span></td>
+          <td><button class="small secondary" onclick="viewPatronLoans(${u.id})">View Loan History</button></td>
+        </tr>
+      `).join('') + '</tbody></table>';
+  } catch (err) {
+    document.getElementById('patronList').innerHTML = '<p class="empty">Failed to load patrons.</p>';
+  }
+}
+
+async function viewPatronLoans(userId) {
+  const el = document.getElementById('patronDetail');
+  el.innerHTML = '<h3 style="margin-top:2rem">Loan History</h3><p class="empty">Loading...</p>';
+  try {
+    const loans = await apiFetch('/users/' + userId + '/loans');
+    if (loans.length === 0) {
+      el.innerHTML = '<h3 style="margin-top:2rem">Loan History</h3><p class="empty">No loans found.</p>';
+      return;
+    }
+    el.innerHTML = '<h3 style="margin-top:2rem">Loan History</h3><table><thead><tr><th>Book ID</th><th>Borrowed</th><th>Due</th><th>Returned</th></tr></thead><tbody>' +
+      loans.map(l => `
+        <tr>
+          <td>${l.book_id}</td>
+          <td>${new Date(l.borrowed_at).toLocaleDateString()}</td>
+          <td>${new Date(l.due_at).toLocaleDateString()}</td>
+          <td>${l.returned_at ? new Date(l.returned_at).toLocaleDateString() : '—'}</td>
+        </tr>
+      `).join('') + '</tbody></table>';
+  } catch (err) {
+    el.innerHTML = '<p class="empty">Failed to load loan history.</p>';
+  }
+}
+
+// ==================== REPORTS VIEW ====================
+async function renderReports() {
+  const content = document.getElementById('content');
+  content.innerHTML = `<h2>Reports</h2><div id="reportSummary"><p class="empty">Loading...</p></div>`;
+  try {
+    const r = await apiFetch('/reports/summary');
+    const topRows = r.top_borrowed_books.length === 0
+      ? '<p class="empty">No borrow history yet.</p>'
+      : '<table><thead><tr><th>Title</th><th>Author</th><th>Times Borrowed</th></tr></thead><tbody>' +
+        r.top_borrowed_books.map(b => `<tr><td>${escapeHtml(b.title)}</td><td>${escapeHtml(b.author)}</td><td>${b.borrow_count}</td></tr>`).join('') +
+        '</tbody></table>';
+
+    document.getElementById('reportSummary').innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-value">${r.total_books}</div><div class="stat-label">Total Books</div></div>
+        <div class="stat-card"><div class="stat-value">${r.available_books}</div><div class="stat-label">Available Copies</div></div>
+        <div class="stat-card"><div class="stat-value">${r.active_loans}</div><div class="stat-label">Active Loans</div></div>
+        <div class="stat-card"><div class="stat-value">${r.overdue_loans}</div><div class="stat-label">Overdue Loans</div></div>
+      </div>
+      <h3>Top 5 Most Borrowed Books</h3>
+      ${topRows}
+    `;
+  } catch (err) {
+    document.getElementById('reportSummary').innerHTML = '<p class="empty">Failed to load reports.</p>';
+  }
+}
+
+// ==================== BOOTSTRAP ====================
+window.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('ls_token')) {
+    showApp();
+  }
+});
+</script>
+</body>
+</html>

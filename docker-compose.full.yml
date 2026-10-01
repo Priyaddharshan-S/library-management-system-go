@@ -1,0 +1,55 @@
+# OPTIONAL fully-Dockerized setup (API + Postgres both in containers).
+#
+# Throughout this build, docker-compose.yml only runs Postgres, with the Go
+# API running natively on your PC via `go run ./cmd/api`. That's the
+# recommended way to develop.
+#
+# This file is a fully-containerized alternative — useful as a final
+# "would this work as a real deployment?" sanity check. It uses different
+# host ports (5434, 8081) so it can run alongside your normal setup without
+# any conflicts.
+#
+# Run it with:
+#   docker compose -f docker-compose.full.yml up --build
+#
+# Note: if you use this, the frontend's API_BASE constant would need to
+# point at :8081 instead of :8080 to match.
+
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: library_user
+      POSTGRES_PASSWORD: library_pass
+      POSTGRES_DB: library_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata_full:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U library_user -d library_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgres://library_user:library_pass@db:5432/library_db?sslmode=disable
+      JWT_SECRET: change_this_to_a_long_random_string
+      JWT_EXPIRY_HOURS: "24"
+      LOAN_DAYS: "14"
+    ports:
+      - "8081:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata_full:

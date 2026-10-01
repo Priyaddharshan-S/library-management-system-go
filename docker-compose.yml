@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: library_user
+      POSTGRES_PASSWORD: library_pass
+      POSTGRES_DB: library_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Postgres runs any .sql files in this folder, in filename order,
+      # the FIRST time the container starts with an empty database volume.
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U library_user -d library_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # The "api" service is added back in Phase 7, once everything works.
+  # For now we run the Go server directly on your PC with `go run`,
+  # which gives faster iteration and clearer error messages.
+
+volumes:
+  pgdata:
